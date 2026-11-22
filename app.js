@@ -5,6 +5,7 @@ const pause=document.getElementById('pause'),music=document.getElementById('musi
 const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
 let time=reduced?10:0,last=performance.now(),playing=!reduced,musicOn=false;
 const options={};
+let lastDrawKey='';
 audio.volume=movie.volume=0.8;
 function setPlaying(value){playing=value;pause.textContent=playing?'暂停':'播放';if(!playing)audio.pause();}
 async function playMusic(){try{audio.currentTime=time%20;await audio.play();musicOn=true;music.textContent='关闭音乐';setPlaying(true);}catch{musicOn=false;music.textContent='点击播放音乐';}}
@@ -14,7 +15,8 @@ function frame(now){
   options.message=document.getElementById('message').value;
   options.speed=+document.getElementById('speed').value;
   options.snow=document.getElementById('snow').checked;
-  AsciiChristmas.render(ctx,time,options);
+  const drawKey=[Math.floor(time*30),options.message,options.speed,options.snow].join('|');
+  if(drawKey!==lastDrawKey){AsciiChristmas.render(ctx,time,options);lastDrawKey=drawKey;}
   document.getElementById('clock').textContent='00:'+String(Math.floor(time%20)).padStart(2,'0')+' / 00:20 · 循环播放';
   requestAnimationFrame(frame);
 }

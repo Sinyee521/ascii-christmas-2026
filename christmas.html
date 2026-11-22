@@ -59,10 +59,10 @@
   const cache=new Map();let factory;
   function sprite(ch,c,size,glow,level){
     const key=[ch,c,size,glow,level].join('|');if(cache.has(key))return cache.get(key);
-    const s=factory(40,40),q=s.getContext('2d');q.font=`${size}px Consolas, "Courier New", monospace`;q.textAlign='center';q.textBaseline='middle';
+    const extent=glow?40:16,center=extent/2,s=factory(extent,extent),q=s.getContext('2d');q.font=`${size}px Consolas, "Courier New", monospace`;q.textAlign='center';q.textBaseline='middle';
     q.globalAlpha=level/5;
-    if(glow){q.shadowColor=c;q.shadowBlur=9;q.fillStyle=c;q.fillText(ch,20,20);q.shadowBlur=3;}
-    q.fillStyle=c;q.fillText(ch,20,20);cache.set(key,s);return s;
+    if(glow){q.shadowColor=c;q.shadowBlur=9;q.fillStyle=c;q.fillText(ch,center,center);q.shadowBlur=3;}
+    q.fillStyle=c;q.fillText(ch,center,center);cache.set(key,s);return s;
   }
   function smooth(a,b,x){let u=Math.max(0,Math.min(1,(x-a)/(b-a)));return u*u*(3-2*u);}
   function render(ctx,time,options={}){
@@ -94,7 +94,7 @@
       projected.push({p,v,level,alpha});
     }
     projected.sort((a,b)=>a.v.z-b.v.z);
-    for(const {p,v,level,alpha} of projected){ctx.globalAlpha=Math.min(1,alpha*2);ctx.drawImage(sprite(p.ch,p.c,p.size,p.glow,level),v.x-20,v.y-20);}
+    for(const {p,v,level,alpha} of projected){ctx.globalAlpha=Math.min(1,alpha*2);const glyph=sprite(p.ch,p.c,p.size,p.glow,level);ctx.drawImage(glyph,v.x-glyph.width/2,v.y-glyph.height/2);}
     ctx.globalAlpha=1;
     ctx.textAlign='center';ctx.textBaseline='middle';
     ctx.fillStyle='#e9ce91';ctx.font='16px Consolas, "Courier New", monospace';ctx.fillText('A LITTLE LIGHT FOR YOU',360,78);
@@ -116,6 +116,7 @@ const pause=document.getElementById('pause'),music=document.getElementById('musi
 const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
 let time=reduced?10:0,last=performance.now(),playing=!reduced,musicOn=false;
 const options={};
+let lastDrawKey='';
 audio.volume=movie.volume=0.8;
 function setPlaying(value){playing=value;pause.textContent=playing?'暂停':'播放';if(!playing)audio.pause();}
 async function playMusic(){try{audio.currentTime=time%20;await audio.play();musicOn=true;music.textContent='关闭音乐';setPlaying(true);}catch{musicOn=false;music.textContent='点击播放音乐';}}
@@ -125,7 +126,8 @@ function frame(now){
   options.message=document.getElementById('message').value;
   options.speed=+document.getElementById('speed').value;
   options.snow=document.getElementById('snow').checked;
-  AsciiChristmas.render(ctx,time,options);
+  const drawKey=[Math.floor(time*30),options.message,options.speed,options.snow].join('|');
+  if(drawKey!==lastDrawKey){AsciiChristmas.render(ctx,time,options);lastDrawKey=drawKey;}
   document.getElementById('clock').textContent='00:'+String(Math.floor(time%20)).padStart(2,'0')+' / 00:20 · 循环播放';
   requestAnimationFrame(frame);
 }
